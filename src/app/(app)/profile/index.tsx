@@ -1,9 +1,16 @@
 /**
- * Pantalla de perfil PROVISIONAL (Persona 1).
+ * Pantalla de perfil (Persona 2).
  *
- * Muestra los datos reales que devuelve `profile.service` para que Persona 2
- * verifique que el trigger `private.handle_new_user` creó la fila. NO hay
- * formulario de edición: ese es el módulo de Persona 2.
+ * Sólo presentación. La carga de datos es la misma de antes
+ * (`getMyProfileWithRole` + `refreshProfile` del contexto): no se añadió
+ * ninguna consulta, ni se tocó el servicio, ni las políticas RLS.
+ *
+ * Aquí viven ahora los datos que se quitaron de la pantalla principal. La
+ * información técnica (UUID, proveedor, fecha de alta) va agrupada bajo
+ * "Información de la cuenta" para no competir con lo esencial.
+ *
+ * NO hay formulario de edición: eso requiere decisiones de producto que
+ * siguen abiertas.
  */
 
 import { useCallback, useEffect, useState } from 'react'
@@ -11,6 +18,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
 import { LoadingScreen } from '@/components/common/LoadingScreen'
+import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
 import { translateError } from '@/lib/errors'
 import { getMyProfileWithRole } from '@/services/profile.service'
@@ -19,7 +27,7 @@ import type { UserRole } from '@/types/database.types'
 import { ROLE_LABELS } from '@/types/models'
 
 export default function ProfileScreen() {
-  const { user, refreshProfile } = useAuth()
+  const { user, isAuthenticated, refreshProfile } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [role, setRole] = useState<UserRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -57,21 +65,66 @@ export default function ProfileScreen() {
 
   if (isLoading) return <LoadingScreen message="Cargando perfil…" />
 
+  const fullName = profile?.full_name?.trim() || null
+  const initials =
+    fullName
+      ?.split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || null
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Perfil</Text>
-      <Text style={styles.subtitle}>Datos provisionales. Persona 2 implementa la edición.</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.identity}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials ?? '—'}</Text>
+        </View>
+        <View style={styles.identityText}>
+          <Text style={styles.name} accessibilityRole="header">
+            {fullName ?? 'Sin nombre'}
+          </Text>
+          <Text style={styles.identityMeta}>
+            {user?.email ?? '—'}
+            {role ? ` · ${ROLE_LABELS[role]}` : ''}
+          </Text>
+        </View>
+      </View>
 
       {error ? <ErrorMessage message={error} onRetry={load} /> : null}
 
-      <View style={styles.card}>
+      <Text style={styles.sectionTitle}>DATOS</Text>
+      <Card>
         <Row label="Nombre" value={profile?.full_name ?? '—'} />
+        <Divider />
         <Row label="Correo" value={user?.email ?? '—'} />
-        <Row label="Teléfono" value={profile?.phone ?? 'Sin registrar'} />
-        <Row label="Avatar" value={profile?.avatar_url ?? 'Sin registrar'} />
+        <Divider />
         <Row label="Rol" value={role ? ROLE_LABELS[role] : '—'} />
-        <Row label="Creado" value={profile?.created_at ?? '—'} mono />
-      </View>
+        <Divider />
+        <Row label="Teléfono" value={profile?.phone ?? 'Sin registrar'} />
+        <Divider />
+        <Row label="Avatar" value={profile?.avatar_url ?? 'Sin registrar'} />
+      </Card>
+
+      {/* Datos técnicos: agrupados y al final, no compiten con lo esencial. */}
+      <Text style={styles.sectionTitle}>INFORMACIÓN DE LA CUENTA</Text>
+      <Card>
+        <Row label="Identificador" value={user?.id ?? '—'} mono />
+        <Divider />
+        <Row
+          label="Estado"
+          value={isAuthenticated ? 'Autenticado' : 'Sin sesión'}
+        />
+        <Divider />
+        <Row
+          label="Proveedor"
+          value={user?.app_metadata?.provider ?? 'email'}
+        />
+        <Divider />
+        <Row label="Cuenta creada" value={formatDate(profile?.created_at)} />
+      </Card>
 
       <Text
         style={styles.refresh}
@@ -87,29 +140,130 @@ export default function ProfileScreen() {
   )
 }
 
-function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+/**
+ * `created_at` es un timestamptz en ISO 8601. Se formatea a la zona local;
+ * si el valor no es una fecha válida se devuelve tal cual en vez de "Invalid
+ * Date", que es lo que haría `new Date(texto).toLocaleString()` a secas.
+ */
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return <View style={styles.card}>{children}</View>
+}
+
+function Divider() {
+  return <View style={styles.divider} />
+}
+
+function Row({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, mono && styles.mono]}>{value}</Text>
+      <Text style={[styles.rowValue, mono && styles.mono]} selectable>
+        {value}
+      </Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: '700' },
-  subtitle: { fontSize: 14, opacity: 0.7 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    padding: 14,
-    gap: 8,
+  container: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxxl,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  rowLabel: { fontSize: 14, opacity: 0.65 },
-  rowValue: { fontSize: 14, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-  mono: { fontSize: 12 },
-  refresh: { color: '#1f6feb', textAlign: 'center', marginTop: 8, paddingVertical: 12 },
+  identity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    marginBottom: spacing.xxl,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    ...typography.bodyStrong,
+    color: colors.onInk,
+    letterSpacing: 0.4,
+  },
+  identityText: {
+    flex: 1,
+    gap: 2,
+  },
+  name: {
+    ...typography.title,
+    color: colors.ink,
+  },
+  identityMeta: {
+    ...typography.caption,
+    color: colors.mutedOnCanvas,
+  },
+  sectionTitle: {
+    ...typography.section,
+    color: colors.muted,
+    marginBottom: spacing.md,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.lg,
+    paddingVertical: spacing.md,
+    minHeight: 32,
+  },
+  rowLabel: {
+    ...typography.label,
+    color: colors.muted,
+  },
+  rowValue: {
+    ...typography.body,
+    color: colors.ink,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  mono: {
+    fontSize: 12,
+    color: colors.inkSoft,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.lineSoft,
+  },
+  refresh: {
+    ...typography.bodyStrong,
+    color: colors.inkSoft,
+    textAlign: 'center',
+    minHeight: HIT_SLOP_MIN,
+    paddingVertical: spacing.lg,
+  },
 })

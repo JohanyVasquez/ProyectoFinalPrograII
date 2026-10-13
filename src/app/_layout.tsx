@@ -54,7 +54,7 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
       <RootNavigator />
     </AuthProvider>
   )

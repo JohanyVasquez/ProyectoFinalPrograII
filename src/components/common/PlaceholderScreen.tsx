@@ -1,14 +1,18 @@
 /**
- * Pantalla placeholder para los módulos de otras personas.
+ * Pantalla placeholder para los módulos de otras personas (Persona 2).
  *
  * Persona 3 (listado de espacios), Persona 4 (GPS/mapa) y Persona 5
  * (historial) reemplazarán el contenido de estas pantallas. Esta versión
  * sólo confirma que la ruta está protegida y que el usuario puede navegar;
  * NO implementa lógica de esos módulos.
+ *
+ * Mantiene `Stack.Screen options={{ title }}` para el header del layout.
  */
 
 import { StyleSheet, Text, View } from 'react-native'
 import { Stack } from 'expo-router'
+
+import { colors, radius, spacing, typography } from '@/constants/theme'
 
 export interface PlaceholderScreenProps {
   title: string
@@ -21,9 +25,15 @@ export function PlaceholderScreen({ title, description, owner }: PlaceholderScre
     <>
       <Stack.Screen options={{ title }} />
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        <Text style={styles.owner}>Módulo de {owner} — todavía no implementado.</Text>
+        <View style={styles.card}>
+          <Text style={styles.title} accessibilityRole="header">
+            {title}
+          </Text>
+          <Text style={styles.description}>{description}</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>En desarrollo · {owner}</Text>
+          </View>
+        </View>
       </View>
     </>
   )
@@ -34,21 +44,39 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 8,
+    padding: spacing.xl,
+    backgroundColor: colors.canvas,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.lg,
+    padding: spacing.xxl,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.title,
+    color: colors.ink,
   },
   description: {
-    fontSize: 15,
-    textAlign: 'center',
-    opacity: 0.75,
+    ...typography.body,
+    color: colors.mutedOnCanvas,
+    lineHeight: 22,
   },
-  owner: {
-    fontSize: 13,
-    opacity: 0.5,
-    marginTop: 8,
+  badge: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  badgeText: {
+    ...typography.caption,
+    color: colors.muted,
   },
 })

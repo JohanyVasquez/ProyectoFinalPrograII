@@ -8,9 +8,20 @@
 
 import { Stack } from 'expo-router'
 
+import { colors } from '@/constants/theme'
+
 export default function AppLayout() {
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        // Header monocromático: fondo blanco, texto casi negro, sin sombra.
+        headerStyle: { backgroundColor: colors.surface },
+        headerShadowVisible: false,
+        headerTintColor: colors.ink,
+        headerTitleStyle: { color: colors.ink, fontWeight: '600' },
+        contentStyle: { backgroundColor: colors.canvas },
+      }}
+    >
       <Stack.Screen name="index" options={{ title: 'ParkEasy' }} />
       <Stack.Screen name="parking/index" options={{ title: 'Estacionamientos' }} />
       <Stack.Screen name="vehicle/index" options={{ title: 'Mi vehículo' }} />

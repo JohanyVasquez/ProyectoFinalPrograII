@@ -1,12 +1,15 @@
 /**
- * Pantalla privada temporal (Persona 1).
+ * Pantalla principal (Persona 2).
  *
- * Muestra datos REALES de la sesión para que el resto del equipo pueda
- * verificar la integración: nombre del perfil, rol efectivo y estado de
- * conexión. El botón de cerrar sesión llama a `signOut()` de verdad.
+ * Sólo presentación. La lógica de sesión, el cierre de sesión y los enlaces
+ * son exactamente los mismos que antes del rediseño.
  *
- * Persona 2 reemplaza el diseño; los enlaces a los placeholders deben
- * mantenerse para que los módulos 3/4/5 sigan siendo alcanzables.
+ * Lo que se eliminó a propósito: la tarjeta con correo, rol, UUID, estado y
+ * proveedor. Parecía un panel de pruebas y esa información ahora vive en
+ * `/profile`, bajo "Información de la cuenta".
+ *
+ * Para el saludo se usa `profile.full_name`, que YA está en el contexto de
+ * auth: esta pantalla no hace ninguna consulta nueva a Supabase.
  */
 
 import { useState } from 'react'
@@ -15,38 +18,43 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
 import { ROUTES } from '@/constants/routes'
+import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
 import { translateError } from '@/lib/errors'
-import { ROLE_LABELS } from '@/types/models'
 
+/**
+ * Destinos privados. Los módulos 3/4/5 siguen siendo placeholders; mantener
+ * estas rutas es parte del flujo de navegación existente.
+ */
 const MODULES = [
   {
     href: ROUTES.parking,
     title: 'Estacionamientos',
-    subtitle: 'Listado y estado de espacios · Persona 3',
+    subtitle: 'Consulta ubicaciones y el estado de los espacios',
   },
   {
     href: ROUTES.vehicle,
     title: 'Mi vehículo',
-    subtitle: 'Guardar y encontrar dónde lo estacioné · Persona 4',
+    subtitle: 'Guarda dónde lo estacionaste y encuéntralo luego',
   },
   {
     href: ROUTES.history,
     title: 'Historial',
-    subtitle: 'Sesiones y recordatorios · Persona 5',
+    subtitle: 'Revisa tus sesiones y recordatorios',
   },
   {
     href: ROUTES.profile,
     title: 'Perfil',
-    subtitle: 'Editar tus datos · Persona 2',
+    subtitle: 'Consulta tu información de cuenta',
   },
 ] as const
 
 export default function HomeScreen() {
-  const { profile, role, user, isAuthenticated, signOut } = useAuth()
+  const { profile, signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Flujo de cierre de sesión sin cambios: `signOut()` del contexto.
   const handleSignOut = async () => {
     setError(null)
     setIsSigningOut(true)
@@ -60,33 +68,44 @@ export default function HomeScreen() {
     }
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Hola{profile?.full_name ? `, ${profile.full_name}` : ''}</Text>
-      <Text style={styles.subtitle}>Sesión activa y datos conectados a Supabase.</Text>
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0]
 
-      <View style={styles.card}>
-        <Row label="Correo" value={user?.email ?? '—'} />
-        <Row label="Rol" value={role ? ROLE_LABELS[role] : '—'} />
-        <Row label="ID de usuario" value={user?.id ?? '—'} mono />
-        <Row label="Estado" value={isAuthenticated ? 'Autenticado' : 'Sin sesión'} />
-        <Row
-          label="Proveedor"
-          value={user?.app_metadata?.provider ?? 'email'}
-        />
+  return (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.header}>
+        <Text style={styles.greeting} accessibilityRole="header">
+          {firstName ? `¡Hola, ${firstName}!` : '¡Hola, bienvenido a ParkEasy!'}
+        </Text>
+        <Text style={styles.tagline}>Tu estacionamiento, más sencillo.</Text>
       </View>
 
       {error ? <ErrorMessage message={error} /> : null}
 
-      <Text style={styles.sectionTitle}>Módulos</Text>
-      {MODULES.map((module) => (
-        <Link key={module.href} href={module.href} asChild>
-          <TouchableOpacity style={styles.module} accessibilityRole="button">
-            <Text style={styles.moduleTitle}>{module.title}</Text>
-            <Text style={styles.moduleSubtitle}>{module.subtitle}</Text>
-          </TouchableOpacity>
-        </Link>
-      ))}
+      <Text style={styles.sectionTitle}>IR A</Text>
+
+      <View style={styles.moduleList}>
+        {MODULES.map((module) => (
+          <Link key={module.href} href={module.href} asChild>
+            <TouchableOpacity
+              style={styles.module}
+              accessibilityRole="button"
+              accessibilityLabel={module.title}
+              accessibilityHint={module.subtitle}
+            >
+              <View style={styles.moduleText}>
+                <Text style={styles.moduleTitle}>{module.title}</Text>
+                <Text style={styles.moduleSubtitle}>{module.subtitle}</Text>
+              </View>
+              <Text style={styles.chevron} accessibilityElementsHidden>
+                ›
+              </Text>
+            </TouchableOpacity>
+          </Link>
+        ))}
+      </View>
 
       <TouchableOpacity
         style={[styles.signOut, isSigningOut && styles.signOutDisabled]}
@@ -103,61 +122,75 @@ export default function HomeScreen() {
   )
 }
 
-function Row({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-}) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, mono && styles.mono]} numberOfLines={1}>
-        {value}
-      </Text>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 12, paddingBottom: 40 },
-  title: { fontSize: 26, fontWeight: '700' },
-  subtitle: { fontSize: 15, opacity: 0.7 },
-  card: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    padding: 14,
-    gap: 8,
-    backgroundColor: '#fafafa',
+  container: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xxxl,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  rowLabel: { fontSize: 14, opacity: 0.65 },
-  rowValue: { fontSize: 14, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-  mono: { fontFamily: 'monospace', fontSize: 12 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', marginTop: 8 },
+  header: {
+    gap: spacing.xs,
+    marginBottom: spacing.xxl,
+  },
+  greeting: {
+    ...typography.display,
+    color: colors.ink,
+  },
+  tagline: {
+    ...typography.body,
+    color: colors.mutedOnCanvas,
+  },
+  sectionTitle: {
+    ...typography.section,
+    color: colors.muted,
+    marginBottom: spacing.md,
+  },
+  moduleList: {
+    gap: spacing.sm,
+  },
   module: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 10,
-    padding: 14,
+    borderColor: colors.lineSoft,
+    borderRadius: radius.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    minHeight: HIT_SLOP_MIN + 8,
+  },
+  moduleText: {
+    flex: 1,
     gap: 2,
   },
-  moduleTitle: { fontSize: 16, fontWeight: '600' },
-  moduleSubtitle: { fontSize: 13, opacity: 0.65 },
-  signOut: {
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: '#c0392b',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    minHeight: 48,
-    justifyContent: 'center',
+  moduleTitle: {
+    ...typography.bodyStrong,
+    color: colors.ink,
   },
-  signOutDisabled: { opacity: 0.6 },
-  signOutText: { color: '#c0392b', fontWeight: '600', fontSize: 16 },
+  moduleSubtitle: {
+    ...typography.caption,
+    color: colors.muted,
+  },
+  chevron: {
+    ...typography.title,
+    color: colors.muted,
+    lineHeight: 26,
+  },
+  signOut: {
+    marginTop: spacing.xxl,
+    minHeight: HIT_SLOP_MIN,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.inkSoft,
+  },
+  signOutDisabled: {
+    opacity: 0.5,
+  },
+  signOutText: {
+    ...typography.bodyStrong,
+    color: colors.inkSoft,
+  },
 })

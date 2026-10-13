@@ -1,12 +1,14 @@
 /**
- * Pantalla de carga provisional (Persona 1).
+ * Pantalla de carga (Persona 2).
  *
- * Persona 2 puede sustituirla por su propio componente sin tocar nada más:
- * todas las rutas la usan a través de `<LoadingScreen />` y sólo dependen
- * de que exporte un componente.
+ * Mismo contrato: exporta `LoadingScreen` con una prop `message?`.
+ * Se muestra en el arranque de la app mientras se restaura la sesión, así que
+ * su fondo debe coincidir con el de las pantallas para que no parpadee.
  */
 
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+
+import { colors, spacing, typography } from '@/constants/theme'
 
 export interface LoadingScreenProps {
   message?: string
@@ -15,7 +17,7 @@ export interface LoadingScreenProps {
 export function LoadingScreen({ message = 'Cargando…' }: LoadingScreenProps) {
   return (
     <View style={styles.container} accessibilityRole="progressbar">
-      <ActivityIndicator size="large" />
+      <ActivityIndicator size="large" color={colors.ink} />
       <Text style={styles.message}>{message}</Text>
     </View>
   )
@@ -26,11 +28,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 12,
+    padding: spacing.xl,
+    gap: spacing.md,
+    backgroundColor: colors.canvas,
   },
   message: {
-    fontSize: 15,
-    opacity: 0.7,
+    ...typography.body,
+    color: colors.mutedOnCanvas,
   },
 })

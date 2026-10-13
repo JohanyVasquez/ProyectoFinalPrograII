@@ -1,11 +1,14 @@
 /**
- * Mensaje de error provisional (Persona 1).
+ * Mensaje de error (Persona 2).
  *
- * Muestra texto ya traducido por `translateError`, nunca el error crudo de
- * Supabase: podría filtrar nombres de tablas o políticas.
+ * Sin cambios de comportamiento ni de props: sólo se recolorea a la paleta
+ * monocromática. Un error en rojo era el único color fuera de la escala de
+ * grises, y rompía la identidad visual.
  */
 
 import { StyleSheet, Text, View } from 'react-native'
+
+import { colors, radius, spacing, typography } from '@/constants/theme'
 
 export interface ErrorMessageProps {
   /** Mensaje en español. Si se pasa un error sin traducir, se muestra su `message`. */
@@ -32,23 +35,28 @@ export function ErrorMessage({ message, title = 'Algo salió mal', onRetry }: Er
 
 const styles = StyleSheet.create({
   container: {
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#c0392b',
-    backgroundColor: '#fdecea',
-    gap: 4,
+    borderColor: colors.line,
+    borderLeftWidth: 3,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.xs,
   },
   title: {
-    fontWeight: '600',
-    color: '#922b21',
+    ...typography.bodyStrong,
+    color: colors.ink,
   },
   message: {
-    color: '#922b21',
+    ...typography.caption,
+    color: colors.inkSoft,
+    lineHeight: 18,
   },
   retry: {
-    marginTop: 4,
-    color: '#922b21',
+    ...typography.label,
+    color: colors.ink,
     textDecorationLine: 'underline',
+    paddingTop: spacing.xs,
   },
 })
