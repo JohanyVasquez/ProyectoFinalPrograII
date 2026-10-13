@@ -17,6 +17,7 @@ import { Link } from 'expo-router'
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
+import { Logo } from '@/components/common/Logo'
 import { ROUTES } from '@/constants/routes'
 import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
@@ -75,11 +76,14 @@ export default function HomeScreen() {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
-        <Text style={styles.greeting} accessibilityRole="header">
-          {firstName ? `¡Hola, ${firstName}!` : '¡Hola, bienvenido a ParkEasy!'}
-        </Text>
-        <Text style={styles.tagline}>Tu estacionamiento, más sencillo.</Text>
+      <View style={styles.brandRow}>
+        <Logo size="md" />
+        <View style={styles.header}>
+          <Text style={styles.greeting} accessibilityRole="header">
+            {firstName ? `¡Hola, ${firstName}!` : '¡Hola, bienvenido a ParkEasy!'}
+          </Text>
+          <Text style={styles.tagline}>Tu estacionamiento, más sencillo.</Text>
+        </View>
       </View>
 
       {error ? <ErrorMessage message={error} /> : null}
@@ -128,9 +132,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxxl,
   },
-  header: {
-    gap: spacing.xs,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
     marginBottom: spacing.xxl,
+  },
+  header: {
+    flex: 1,
+    gap: spacing.xs,
   },
   greeting: {
     ...typography.display,
@@ -184,13 +194,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.inkSoft,
+    borderColor: colors.line,
   },
   signOutDisabled: {
     opacity: 0.5,
   },
   signOutText: {
     ...typography.bodyStrong,
-    color: colors.inkSoft,
+    color: colors.mutedOnCanvas,
   },
 })

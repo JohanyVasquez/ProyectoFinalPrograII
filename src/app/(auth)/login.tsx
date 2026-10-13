@@ -26,6 +26,7 @@ import {
 } from 'react-native'
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
+import { Logo } from '@/components/common/Logo'
 import { ROUTES } from '@/constants/routes'
 import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
@@ -74,9 +75,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.brand}>
-          <View style={styles.brandMark}>
-            <Text style={styles.brandInitial}>P</Text>
-          </View>
+          <Logo size="lg" />
           <Text style={styles.title}>ParkEasy</Text>
           <Text style={styles.subtitle}>Tu estacionamiento, más sencillo.</Text>
         </View>
@@ -152,20 +151,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.xl,
   },
-  brandMark: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  brandInitial: {
-    ...typography.bodyStrong,
-    fontSize: 18,
-    color: colors.onInk,
-  },
   title: {
     ...typography.display,
     fontSize: 26,
@@ -201,7 +186,7 @@ const styles = StyleSheet.create({
     color: colors.mutedOnCanvas,
   },
   button: {
-    backgroundColor: colors.ink,
+    backgroundColor: colors.accent,
     borderRadius: radius.sm,
     paddingVertical: spacing.lg,
     alignItems: 'center',

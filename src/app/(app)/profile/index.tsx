@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
+import { Logo } from '@/components/common/Logo'
 import { LoadingScreen } from '@/components/common/LoadingScreen'
 import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
@@ -66,12 +67,6 @@ export default function ProfileScreen() {
   if (isLoading) return <LoadingScreen message="Cargando perfil…" />
 
   const fullName = profile?.full_name?.trim() || null
-  const initials =
-    fullName
-      ?.split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || null
 
   return (
     <ScrollView
@@ -79,9 +74,7 @@ export default function ProfileScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials ?? '—'}</Text>
-        </View>
+        <Logo size="sm" />
         <View style={styles.identityText}>
           <Text style={styles.name} accessibilityRole="header">
             {fullName ?? 'Sin nombre'}
@@ -194,19 +187,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.lg,
     marginBottom: spacing.xxl,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    ...typography.bodyStrong,
-    color: colors.onInk,
-    letterSpacing: 0.4,
   },
   identityText: {
     flex: 1,

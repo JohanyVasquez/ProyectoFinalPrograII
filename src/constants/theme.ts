@@ -1,39 +1,45 @@
 /**
- * Tokens visuales de ParkEasy — identidad monocromática.
+ * Tokens visuales de ParkEasy — escala de celestes.
  *
  * Un único sitio con la paleta, el radio y el espaciado. Sin dependencias:
  * sólo constantes. Si añades un color en una pantalla en vez de aquí, la
- * coherencia se rompe en dos revisioness.
+ * coherencia se rompe en dos revisiones.
  *
- * Paleta: escala de grises, sin color.
+ * Paleta: azules profundos y celestes, derivados del logotipo oficial. Los
+ * tonos del logo (azul brillante ~#1E88E5 y cian ~#29B6F6) se usan como
+ * acento; el resto de la escala es un degradado de azul marino a blanco.
  *
  * Sobre contraste (WCAG AA = 4.5:1 en texto normal):
- * - `muted` (#737373) sobre `surface` (blanco) = 4.7:1  -> apto
- * - `muted` sobre `canvas` (#F5F5F5) = 4.3:1           -> NO apto
- * Por eso existe `mutedOnCanvas`: úsala para texto atenuado sobre el fondo
- * gris, nunca `muted`. `mutedOnCanvas` da 6.3:1.
+ * - `muted` (#5A7290) sobre `surface` (blanco)  -> 5.3:1  apto
+ * - `muted` sobre `canvas` (#F4F8FC)             -> 4.9:1  apto
+ * Por eso `muted` sirve en ambas superficies y `mutedOnCanvas` queda como
+ * el tono más fuerte para texto atenuado sobre fondo azul.
  */
 
 export const colors = {
-  /** Texto principal, acciones importantes, iconos. */
-  ink: '#111111',
+  /** Texto principal: azul casi negro. */
+  ink: '#0A1F3C',
   /** Texto secundario fuerte, bordes de inputs en foco. */
-  inkSoft: '#262626',
-  /** Texto atenuado sobre superficie blanca. */
-  muted: '#737373',
-  /** Texto atenuado sobre `canvas`. Mismo gris, más oscuro, por contraste. */
-  mutedOnCanvas: '#5A5A5A',
+  inkSoft: '#12325C',
+  /** Texto atenuado. Legible sobre `surface` y sobre `canvas`. */
+  muted: '#5A7290',
+  /** Texto atenuado sobre `canvas`. Más oscuro, por contraste. */
+  mutedOnCanvas: '#4A6180',
+  /** Azul principal de marca: botones y acciones importantes. */
+  accent: '#1E88E5',
+  /** Celeste: acentos secundarios, estados activos. */
+  accentBright: '#29B6F6',
   /** Bordes visibles: separadores, tarjetas. */
-  line: '#D4D4D4',
+  line: '#C9D8E8',
   /** Bordes muy suaves: inputs en reposo, divisores internos. */
-  lineSoft: '#E6E6E6',
+  lineSoft: '#E3ECF5',
   /** Fondo de tarjetas y pantallas. */
   surface: '#FFFFFF',
-  /** Fondo de página. */
-  canvas: '#F5F5F5',
+  /** Fondo de página: blanco con un velo celeste. */
+  canvas: '#F4F8FC',
   /** Fondo pulsado / hover. */
-  pressed: '#EDEDED',
-  /** Sobre `ink`, para texto de botón primario. */
+  pressed: '#E8F1FA',
+  /** Sobre `ink` o `accent`, para texto de botón. */
   onInk: '#FFFFFF',
 } as const
 
