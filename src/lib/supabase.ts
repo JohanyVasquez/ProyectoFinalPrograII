@@ -18,7 +18,7 @@ import 'react-native-url-polyfill/auto'
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AppState } from 'react-native'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
 import { AppError, logTechnical, missingEnvMessage } from '@/lib/errors'
 import type { Database } from '@/types/database.types'
@@ -30,48 +30,52 @@ import type { Database } from '@/types/database.types'
  * Si tu proyecto usa la clave `anon` legada, renombra la variable en el
  * Dashboard y en `.env`; no se admiten los dos nombres a la vez.
  */
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ?? ''
+const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ?? ''
+const isConfigured = supabaseUrl.length > 0 && supabasePublishableKey.length > 0
 
 /**
  * Error de configuración, o `null` si todo está bien. Se evalúa en el arranque
  * para que `AuthProvider` pueda mostrar un mensaje legible en vez de dejar
  * que reviente el módulo al importar.
  */
-export const configError: AppError | null =
-  supabaseUrl && supabasePublishableKey
-    ? null
-    : missingEnvMessage(
-        [
-          ...(supabaseUrl ? [] : ['EXPO_PUBLIC_SUPABASE_URL']),
-          ...(supabasePublishableKey ? [] : ['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY']),
-        ],
-      )
+export const configError: AppError | null = isConfigured
+  ? null
+  : missingEnvMessage([
+      ...(supabaseUrl ? [] : ['EXPO_PUBLIC_SUPABASE_URL']),
+      ...(supabasePublishableKey ? [] : ['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY']),
+    ])
 
 if (configError) {
   logTechnical('supabase/config', configError)
 }
 
 /**
- * `null` cuando falta configuración. Los servicios comprueban
- * `assertSupabaseConfigured()` antes de tocar la BD, de modo que el
- * error que ve el usuario sea el mensaje de arriba y no un
+ * `null` cuando falta configuración. Los servicios llaman a
+ * `assertSupabaseConfigured()` antes de tocar la BD, de modo que el error que
+ * ve el usuario sea el mensaje de arriba y no un
  * "Cannot read property 'from' of null".
+ *
+ * NO le anotes el tipo a mano (`SupabaseClient<Database>`): con supabase-js
+ * 2.117 y TypeScript 6, esa anotación explícita no resuelve igual que el tipo
+ * inferido y rompe la compilación. `Supabase` es el alias correcto.
  */
-export const supabase: SupabaseClient<Database> | null =
-  configError === null
-    ? createClient<Database>(supabaseUrl, supabasePublishableKey, {
-        auth: {
-          storage: AsyncStorage,
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: false,
-        },
-      })
-    : null
+export const supabase = isConfigured
+  ? createClient<Database>(supabaseUrl, supabasePublishableKey, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    })
+  : null
+
+/** Tipo del cliente ya estrechado a no-nulo. */
+export type Supabase = NonNullable<typeof supabase>
 
 /** Lanza el error de configuración si falta algo. Usar en servicios. */
-export function assertSupabaseConfigured(): SupabaseClient<Database> {
+export function assertSupabaseConfigured(): Supabase {
   if (!supabase) {
     throw configError ?? new AppError('Supabase no está configurado correctamente.')
   }

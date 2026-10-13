@@ -22,7 +22,6 @@ Documento de Persona 1. Describe cómo está cableada la app y **por qué**.
 src/
   app/                          # RUTAS. Cada fichero = una pantalla.
     _layout.tsx                 # AuthProvider + Stack.Protected (raíz)
-    index.tsx                   # Redirect a home o login
     (auth)/
       _layout.tsx
       login.tsx                 # provisional (Persona 1 → Persona 2)
@@ -85,10 +84,27 @@ Cuando un guard pasa de `true` a `false`, React Navigation elimina el historial
 de esa pantalla: el usuario salta fuera de las rutas privadas al cerrar sesión.
 
 > **Limitación conocida (SDK 57):** `Stack.Protected` acepta `guard` pero **no**
-> `redirectTo`; esa prop es de SDK 58+. Cuando el guard es falso, la redirección
- * va al *ancla* del stack. El layout raíz declara los grupos en un orden que
- * deja `login` como ancla de facto. Si al actualizar de SDK quieres `redirectTo`,
-> revisa https://docs.expo.dev/router/advanced/protected antes de usarlo.
+> `redirectTo`; esa prop es de SDK 58+. Cuando el guard es falso, React
+> Navigation redirige a la **primera pantalla disponible** del stack.
+
+### 3.3.1 Por qué no existe `src/app/index.tsx`
+
+`src/app/(app)/index.tsx` ya produce la ruta `/`. Un `index.tsx` en la raíz
+genera **una segunda ruta `/`** y, además, un `Redirect` a `/` sería un bucle
+infinito.
+
+Verificado con el mapa de rutas tipadas (`.expo/types/router.d.ts`), que
+exponía `/` dos veces. Con el fichero eliminado, `/` aparece una sola vez,
+como `${(app)}` | `/`.
+
+El ancla de las rutas públicas la fija el **orden** de
+`src/app/(auth)/_layout.tsx`: `login` se declara primero, así que es la
+primera pantalla disponible cuando `(app)` queda deshabilitado. Si alguien
+reordena ese layout, cambia el destino del redirect.
+
+Consecuencia práctica: **no crees `src/app/index.tsx`.** Si alguna vez hace
+falta una pantalla pública en la raíz, dale un path distinto (`/welcome`) y
+declárala dentro de `(auth)`.
 
 ### 3.4 Registro con confirmación de correo
 

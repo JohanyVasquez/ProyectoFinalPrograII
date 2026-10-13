@@ -52,6 +52,26 @@ Screens inside `(app)/` are already protected. Adding a route there requires no
 extra work. To add a header, you must still register it in
 `src/app/(app)/_layout.tsx`; otherwise it renders bare (harmless but ugly).
 
+### Do not create `src/app/index.tsx`
+
+`src/app/(app)/index.tsx` already owns `/`. A root `index.tsx` produces a
+**second route `/`**, and a `<Redirect href="/">` there would be an infinite
+loop. It was tried and removed for this reason.
+
+The public anchor is `(auth)/login`, chosen purely by **declaration order** in
+`src/app/(auth)/_layout.tsx` — `login` is declared first, so it is the first
+available screen once `Stack.Protected` disables `(app)`. Reordering that layout
+silently changes where unauthenticated users land.
+
+If you need a public root screen, give it a real path (`/welcome`) and declare
+it inside `(auth)`.
+
+### Verify the route map after adding routes
+
+Typed routes generate `.expo/types/router.d.ts` on `npx expo start`. Read it to
+confirm each pathname appears exactly once. Note it is gitignored, so a fresh
+clone typechecks without it.
+
 ## Non-negotiable rules
 
 These are the mistakes that are easy to make and hard to notice:
@@ -71,6 +91,7 @@ These are the mistakes that are easy to make and hard to notice:
 - **`getSession()` is local-only** (reads AsyncStorage); `getClaims()` validates the JWT against the server. `src/contexts/AuthContext.tsx` uses both, in that order, on startup.
 - **`isLoading` starts as `supabase !== null`, not `true`.** Setting it inside the effect trips `react-hooks/set-state-in-effect` and causes a cascading render.
 - **AsyncStorage is mandatory.** Without `storage: AsyncStorage`, `persistSession` cannot work on native and the session dies on every restart.
+- **Never annotate `supabase`'s type.** `export const supabase: SupabaseClient<Database> | null = …` compiles in some states and breaks in others under supabase-js 2.117 + TypeScript 6 (deferred conditional generics). Let it infer and use the `Supabase` alias (`NonNullable<typeof supabase>`) instead.
 - **RLS policies are row-level, not column-level.** The `GRANT update` on `parking_spaces` is table-wide; the trigger `private.guard_space_update` is the *only* thing stopping an `operator` from renaming spaces. Do not weaken it.
 - **A parking session is not a reservation.** Saving one never changes `parking_spaces.status`.
 - **`markReminderAsSent()` writes a DB row. It sends nothing.** Notifications are Person 5's job.
