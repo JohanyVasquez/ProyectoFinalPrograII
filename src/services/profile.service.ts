@@ -8,7 +8,7 @@
 
 import { AppError, logTechnical, translateError } from '@/lib/errors'
 import { assertSupabaseConfigured } from '@/lib/supabase'
-import { FULL_NAME_MAX, PHONE_MAX } from '@/lib/validation'
+import { FULL_NAME_MAX, isValidGuatemalaPhone, PHONE_MAX } from '@/lib/validation'
 import type { TableRow, UserRole } from '@/types/database.types'
 import { getVerifiedUserId } from '@/services/auth.service'
 
@@ -40,9 +40,23 @@ function sanitize(input: UpdateProfileInput): UpdateProfileInput {
   }
 
   if (input.phone !== undefined) {
+    // Vacío => `null`: la columna es nullable y borrar el teléfono es una
+    // acción explícita del usuario. Un valor NO vacío tiene que ser un
+    // teléfono guatemalteco razonable.
+    //
+    // Se guarda lo que el usuario escribió (con `trim`), sin reformatear:
+    // reordenar o quitar el +502 a un número que ya era válido sería alterar
+    // un dato correcto.
     const phone = input.phone?.trim() || null
-    if (phone && phone.length > PHONE_MAX) {
-      throw new AppError(`El teléfono no puede superar ${PHONE_MAX} caracteres.`)
+    if (phone !== null) {
+      if (phone.length > PHONE_MAX) {
+        throw new AppError(`El teléfono no puede superar ${PHONE_MAX} caracteres.`)
+      }
+      if (!isValidGuatemalaPhone(phone)) {
+        throw new AppError(
+          'El teléfono no parece válido. Usa 8 dígitos, por ejemplo 5123 4567 o +502 5123 4567.',
+        )
+      }
     }
     payload.phone = phone
   }

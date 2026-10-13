@@ -18,11 +18,13 @@ import {
   isValidAccuracy,
   isValidEmail,
   isValidFullName,
+  isValidGuatemalaPhone,
   isValidLatitude,
   isValidLongitude,
   isValidPassword,
   joinErrors,
   normalizeEmail,
+  phoneDigitsOnly,
 } from '@/lib/validation'
 
 describe('normalizeEmail', () => {
@@ -119,6 +121,51 @@ describe('escapeLikePattern', () => {
 
   it('deja intacto el texto normal', () => {
     assert.equal(escapeLikePattern('Estacionamiento Central'), 'Estacionamiento Central')
+  })
+})
+
+describe('teléfono de Guatemala', () => {
+  it('acepta el formato local de 8 dígitos', () => {
+    assert.equal(isValidGuatemalaPhone('51234567'), true)
+    assert.equal(isValidGuatemalaPhone('22223333'), true)
+  })
+
+  it('acepta espacios, guiones y paréntesis como separadores', () => {
+    assert.equal(isValidGuatemalaPhone('5123 4567'), true)
+    assert.equal(isValidGuatemalaPhone('5123-4567'), true)
+    assert.equal(isValidGuatemalaPhone('(5123) 4567'), true)
+    assert.equal(isValidGuatemalaPhone('  5123 4567  '), true)
+  })
+
+  it('acepta el prefijo +502 con y sin signos', () => {
+    assert.equal(isValidGuatemalaPhone('+502 5123 4567'), true)
+    assert.equal(isValidGuatemalaPhone('+502-5123-4567'), true)
+    assert.equal(isValidGuatemalaPhone('50251234567'), true)
+    assert.equal(isValidGuatemalaPhone('+50251234567'), true)
+  })
+
+  it('rechaza longitudes que no cuadran', () => {
+    assert.equal(isValidGuatemalaPhone('512345'), false) // 6 dígitos
+    assert.equal(isValidGuatemalaPhone('5123456789'), false) // 10, ni local ni +502
+    assert.equal(isValidGuatemalaPhone('+502 5123 45'), false) // prefijo + 7
+  })
+
+  it('rechaza vacío y valores sin dígitos', () => {
+    // "" es una decisión del llamador (borrar el campo), no un formato válido.
+    assert.equal(isValidGuatemalaPhone(''), false)
+    assert.equal(isValidGuatemalaPhone('   '), false)
+    assert.equal(isValidGuatemalaPhone('abc-defg'), false)
+  })
+
+  it('rechaza un prefijo internacional distinto de 502', () => {
+    assert.equal(isValidGuatemalaPhone('+1 5123456789'), false)
+    assert.equal(isValidGuatemalaPhone('503 51234567'), false)
+  })
+
+  it('extrae sólo dígitos para contar', () => {
+    assert.equal(phoneDigitsOnly('+502 (5123) 4567'), '50251234567')
+    assert.equal(phoneDigitsOnly('5123-4567'), '51234567')
+    assert.equal(phoneDigitsOnly('sin dígitos'), '')
   })
 })
 

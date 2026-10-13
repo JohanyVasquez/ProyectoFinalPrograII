@@ -13,11 +13,12 @@
  * siguen abiertas.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { ErrorMessage } from '@/components/common/ErrorMessage'
 import { Logo } from '@/components/common/Logo'
+import { ProfileEditModal } from '@/components/profile/ProfileEditModal'
 import { LoadingScreen } from '@/components/common/LoadingScreen'
 import { HIT_SLOP_MIN, colors, radius, spacing, typography } from '@/constants/theme'
 import { useAuth } from '@/hooks/useAuth'
@@ -33,6 +34,9 @@ export default function ProfileScreen() {
   const [role, setRole] = useState<UserRole | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // La carga vive en un callback aparte para que el botón "Actualizar" y el
   // montaje inicial compartan exactamente el mismo camino.
@@ -64,6 +68,34 @@ export default function ProfileScreen() {
     })()
   }, [load])
 
+  // El aviso de "guardado" tiene temporizador: si el componente se desmonta
+  // antes, hay que cancelarlo para no setState sobre algo ya desmontado.
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
+  /**
+   * Sólo se llama cuando Supabase ya confirmó la escritura.
+   *
+   * Además de refrescar la pantalla, se refresca el contexto de auth para que
+   * el saludo de la pantalla principal muestre el nombre nuevo sin necesidad
+   * de cerrar sesión.
+   */
+  function handleSaved(updated: Profile) {
+    // El rol no se toca: no es un campo editable y no cambió.
+    setProfile(updated)
+    setIsEditing(false)
+    setSavedMessage('Perfil actualizado correctamente')
+    // Refresca el contexto para que el saludo de inicio use el nombre nuevo.
+    void refreshProfile()
+    // El aviso se retira solo. El temporizador se guarda para poder cancelarlo
+    // si el usuario vuelve a editar antes.
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    savedTimerRef.current = setTimeout(() => setSavedMessage(null), 4000)
+  }
+
   if (isLoading) return <LoadingScreen message="Cargando perfil…" />
 
   const fullName = profile?.full_name?.trim() || null
@@ -87,6 +119,12 @@ export default function ProfileScreen() {
       </View>
 
       {error ? <ErrorMessage message={error} onRetry={load} /> : null}
+
+      {savedMessage ? (
+        <View style={styles.savedBanner} accessibilityRole="alert">
+          <Text style={styles.savedText}>{savedMessage}</Text>
+        </View>
+      ) : null}
 
       <Text style={styles.sectionTitle}>DATOS</Text>
       <Card>
@@ -122,15 +160,26 @@ export default function ProfileScreen() {
       <Text
         style={styles.refresh}
         onPress={() => {
-          void refreshProfile()
-          void load()
+          setSavedMessage(null)
+          setIsEditing(true)
         }}
         accessibilityRole="button"
       >
         Actualizar
       </Text>
+
+      <ProfileEditModal
+        // La `key` remonta el modal en cada apertura, así los campos se
+        // rellenan con los valores actuales sin efectos colaterales.
+        key={isEditing ? 'editing' : 'idle'}
+        visible={isEditing}
+        profile={profile}
+        onCancel={() => setIsEditing(false)}
+        onSaved={handleSaved}
+      />
     </ScrollView>
   )
+
 }
 
 /**
@@ -204,6 +253,19 @@ const styles = StyleSheet.create({
     ...typography.section,
     color: colors.muted,
     marginBottom: spacing.md,
+  },
+  savedBanner: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderLeftWidth: 3,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  savedText: {
+    ...typography.bodyStrong,
+    color: colors.ink,
   },
   card: {
     backgroundColor: colors.surface,
