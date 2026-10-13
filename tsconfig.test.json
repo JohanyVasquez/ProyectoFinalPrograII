@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "react-native"]
+  },
+  "include": ["src/**/*.test.ts", "src/lib/validation.ts", "src/lib/errors.ts", "src/types/**/*.ts"],
+  "exclude": []
+}

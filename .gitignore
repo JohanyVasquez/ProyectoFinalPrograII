@@ -31,7 +31,14 @@ yarn-error.*
 *.pem
 
 # local env files
+# `.env` NUNCA se sube: contiene las credenciales del proyecto Supabase.
+.env
 .env*.local
+!.env.example
+
+# Supabase CLI: enlaza un proyecto real (project ref + access token)
+supabase/.temp/
+supabase/.branches/
 
 # typescript
 *.tsbuildinfo
