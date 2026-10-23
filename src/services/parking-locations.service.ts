@@ -71,7 +71,7 @@ export async function listLocations(
 
   const { data, error, count } = await query
     .order('name', { ascending: true })
-    .range(from, to - 1)
+    .range(from, from + pageSize - 1)
 
   if (error) {
     logTechnical('locations/list', translateError(error))

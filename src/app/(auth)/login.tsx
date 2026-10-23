@@ -55,9 +55,7 @@ export default function LoginScreen() {
     setIsSubmitting(true)
     try {
       await signIn({ email: normalizeEmail(email), password })
-      // No se navega a mano: al cambiar la sesión, `Stack.Protected` del
-      // layout raíz redirige solo al grupo `(app)`. Forzar el `push`
-      // competitionaría con esa redirección.
+     
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo iniciar sesión.')
     } finally {

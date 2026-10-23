@@ -1,11 +1,3 @@
-/**
- * Servicio de autenticación (Persona 1).
- *
- * Envuelve `supabase.auth` y devuelve resultados explícitos en vez de
- * propagar errores crudos. Ningún otro servicio debe llamar a
- * `supabase.auth` directamente: pasa por aquí para tener validación y
- * traducción de errores en un solo sitio.
- */
 
 import type { Session } from '@supabase/supabase-js'
 

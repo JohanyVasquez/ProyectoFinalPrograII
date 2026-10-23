@@ -1,16 +1,3 @@
-/**
- * Pantalla de registro PROVISIONAL (Persona 1).
- *
- * Punto delicado: si el proyecto de Supabase tiene la confirmación de
- * correo activa, `signUp` devuelve `pending_confirmation` con `session ===
- * null`. En ese caso NO se entra al área privada: se pide revisar el correo.
- * Saltarse esa comprobación dejaría al usuario en una pantalla que se
- * vacía sola al no existir sesión.
- *
- * Persona 2 reemplaza el diseño conservando el campo `fullName` (es el que
- * el trigger usa para crear `profiles.full_name`) y los estados
- * `isSubmitting` / `error` / `message`.
- */
 
 import { useState } from 'react'
 import { Link } from 'expo-router'
